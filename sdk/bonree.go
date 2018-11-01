@@ -1,11 +1,62 @@
 package sdk
+//#cgo CFLAGS: -I/opt/bonree-agent-sdk/sdk_lib
+//#cgo LDFLAGS: -L/opt/bonree-agent-sdk/sdk_lib/lib -lbonree_sdk -ldl -Wl,-rpath,/opt/bonree-agent-sdk/sdk_lib/lib
+//#cgo linux LDFLAGS: -lrt
+//#include "bonree.h"
+//#include <stdlib.h>
+//#include <stdint.h>
+/*
+uintptr_t apphandle_to_uint(br_app_t apphandle) {
+    return (uintptr_t) apphandle;
+}
+br_app_t uint_to_apphandle(uintptr_t apphandle) {
+    return (br_app_t) apphandle;
+}
+
+uintptr_t bthandle_to_uint(br_bt_t bthandle) {
+    return (uintptr_t) bthandle;
+}
+br_bt_t uint_to_bthandle(uintptr_t bthandle) {
+    return (br_bt_t) bthandle;
+}
+
+uintptr_t behandle_to_uint(br_backend_t behandle) {
+    return (uintptr_t) behandle;
+}
+br_backend_t uint_to_behandle(uintptr_t behandle) {
+    return (br_backend_t) behandle;
+}
+
+uintptr_t threadhandle_to_uint(br_snapshot_thread_t threadhandle) {
+    return (uintptr_t) threadhandle;
+}
+br_snapshot_thread_t uint_to_threadhandle(uintptr_t threadhandle) {
+    return (br_snapshot_thread_t) threadhandle;
+}
+
+uintptr_t funchandle_to_uint(br_snapshot_func_t funchandle) {
+    return (uintptr_t) funchandle;
+}
+br_snapshot_func_t uint_to_funchandle(uintptr_t funchandle) {
+    return (br_snapshot_func_t) funchandle;
+}
+
+uintptr_t exithandle_to_uint(br_exitcall_t exithandle) {
+    return (uintptr_t) exithandle;
+}
+br_exitcall_t uint_to_exithandle(uintptr_t exithandle) {
+    return (br_exitcall_t) exithandle;
+}
+*/
+import "C"
 
 import (
 	"os"
     "os/signal"
     "sync"
 	"syscall"
-	"log"
+	"errors"
+	"unsafe"
 	"bonree/common"
 )
 
@@ -51,7 +102,7 @@ func init() {
         stop = true
         stopLock.Unlock()
 		stopChan <- struct{}{}
-
+		
 		for i := 0; i < len(appHandleSlice); i++ {
 			AppRelease(appHandleSlice[i])
 		}
@@ -65,13 +116,19 @@ func init() {
 // Init Initializes the Bonree SDK.
 // Returns an error on failure.
 func sdkInit() error {	
-	log.Println("SDK Init().")
+	result := int(C.br_sdk_init())
+
+	if result == 0 {
+		text := "Could not initialize the Golang SDK."
+        return errors.New(text)
+	}
+	
 	return nil
 }
 
 // Release Release the Bonree SDK.
 func sdkRelease() {
-	log.Println("SDK Release().")
+	C.br_sdk_release()
 }
 
 func appendAppHandle(appHandle AppHandle) {
@@ -85,116 +142,158 @@ func removeAppHandle(appHandle AppHandle) {
 			_appHandleSlice = append(appHandleSlice[:i], appHandleSlice[i+1:]...)			
 		}
 	}
-	appHandleSlice = _appHandleSlice
+		appHandleSlice = _appHandleSlice
+}
+
+func marshalAppConfig(from *AppConfig) C.br_app_config_t {
+	to := C.br_app_config_t{}
+	
+	to.app_name = C.CString(from.AppName)
+	to.tier_name = C.CString(from.TierName)
+	to.cluster_name = C.CString(from.ClusterName)
+	to.agent_name = C.CString(from.AgentName)
+
+	return to
+}
+
+func freeAppConfigMembers(cAppConfig C.br_app_config_t) {
+    if cAppConfig.app_name != nil {
+        C.free(unsafe.Pointer(cAppConfig.app_name))
+    }
+    if cAppConfig.tier_name != nil {
+        C.free(unsafe.Pointer(cAppConfig.tier_name))
+    }
+    if cAppConfig.cluster_name != nil {
+        C.free(unsafe.Pointer(cAppConfig.cluster_name))
+    }
+    if cAppConfig.agent_name != nil {
+        C.free(unsafe.Pointer(cAppConfig.agent_name))
+    }
 }
 
 // AppInit is Init the app
 func AppInit() AppHandle {
-	log.Println("SDK AppInit().")
-	var appHandle AppHandle = 1
+	appHandle := AppHandle(C.apphandle_to_uint(C.br_app_init()))
 	appendAppHandle(appHandle)
 	return appHandle
 }
 
 // AppInitWithCfg is Init the app with appConfig
 func AppInitWithCfg(appConfig *AppConfig) AppHandle {
-	var appHandle AppHandle = 1
+	cAppConfig := marshalAppConfig(appConfig)
+
+	defer freeAppConfigMembers(cAppConfig)
+
+	appHandle := AppHandle(C.apphandle_to_uint(C.br_app_init_with_cfg(&cAppConfig)))
 	appendAppHandle(appHandle)
-	log.Println("SDK AppInitWithCfg().")
 	return appHandle
 }
 
 // AppRelease Release the app
 func AppRelease(appHandle AppHandle) {
-	if appHandle != 0 {
-		removeAppHandle(appHandle)
-		log.Println("SDK AppRelease().")
-		appHandle = 0
-	}
+	_appHandle := C.uint_to_apphandle(C.uintptr_t(appHandle))
+	C.br_app_release(_appHandle)
+	removeAppHandle(appHandle)
+	appHandle = 0
 }
 
 // BtBegin Begin the BT
 func BtBegin(appHandle AppHandle, name string) BtHandle {
-	log.Println("SDK BtBegin().")
-	return 0
+	_appHandle := C.uint_to_apphandle(C.uintptr_t(appHandle))
+	_name := C.CString(name)
+
+	return BtHandle(C.bthandle_to_uint(C.br_bt_begin(_appHandle, _name)))
 }
 
 // BtBeginEx Begin the BT with crossRequestHeader
 func BtBeginEx(appHandle AppHandle, name string, crossRequestHeader string) BtHandle {
-	log.Println("SDK BtBeginEx().")
-	return 0
+	_appHandle := C.uint_to_apphandle(C.uintptr_t(appHandle))
+	_name := C.CString(name)
+	_crossRequestHeader := C.CString(crossRequestHeader)
+	return BtHandle(C.bthandle_to_uint(C.br_bt_begin_ex(_appHandle, _name, _crossRequestHeader)))
 }
 
 // BtGenerateCrossResheader generate crossResponseHeader
 func BtGenerateCrossResheader(btHandle BtHandle) string {
-	log.Println("SDK BtGenerateCrossResheader().")
-	return "nbg=1a2f69d6-4964-4eb2-43e3-6f0a744044d8;sst=2;sag=1eb82b05-c6e9-4ffd-bcb4-98757ee3b078;sbn=/ylexamples/fopen6.php;sbt=1514537122492;srh=;sbg=293e7c2d-4334-48c1-4c66-65626def4464"
+	_btHandle := C.uint_to_bthandle(C.uintptr_t(btHandle))
+	return C.GoString(C.br_bt_generate_cross_resheader(_btHandle))
 }
 
 // BtEnd End the BT
 func BtEnd(btHandle BtHandle) {
-	log.Println("SDK BtEnd().")
+	_btHandle := C.uint_to_bthandle(C.uintptr_t(btHandle))
+
+	C.br_bt_end(_btHandle)
 }
 
 // BtSetURL Set the URL to BT
 func BtSetURL(btHandle BtHandle, url string) {
-	log.Println("SDK BtSetURL().")
+	_btHandle := C.uint_to_bthandle(C.uintptr_t(btHandle))
+	_url := C.CString(url)
+
+	C.br_bt_set_url(_btHandle, _url)
 }
 
 // BtAddError Add the Error to BT
 func BtAddError(btHandle BtHandle, errorType common.BR_ERROR_TYPE, errorName string, summary string, details string, markBtAsError int) {
-	log.Println("SDK BtAddError().")
+	_btHandle := C.uint_to_bthandle(C.uintptr_t(btHandle))
+	_errorType := C.br_error_type(errorType)
+	_errorName := C.CString(errorName)
+	_summary := C.CString(summary)
+	_details := C.CString(details)
+	_markBtAsError := C.int(markBtAsError)
+
+	C.br_bt_add_error(_btHandle, _errorType, _errorName, _summary, _details, _markBtAsError)
 }
 
-// BackendDeclareSQL declare the sql backend
 func BackendDeclareSQL(sqlType common.BR_SQL_TYPE, host string, port int, dbschema string, vendor string, version string) BackendHandle {
-	log.Println("SDK BackendDeclareSql().")
-	return 0
+	C_ret := C.br_backend_declare_sql(C.br_sql_type(sqlType), C.CString(host), C.int(port), C.CString(dbschema), C.CString(vendor), C.CString(version))
+       ret := BackendHandle(C.behandle_to_uint(C_ret))
+       return ret
 }
 
-// BackendDeclareNosql declare the nosql backend
 func BackendDeclareNosql(nosqlType common.BR_NOSQL_TYPE, serverPool string, port int, vendor string) BackendHandle {
-	log.Println("SDK BackendDeclareNosql().")
-	return 0
+	C_ret := C.br_backend_declare_nosql(C.br_nosql_type(nosqlType), C.CString(serverPool), C.int(port), C.CString(vendor))
+       ret := BackendHandle(C.behandle_to_uint(C_ret))
+       return ret
 }
 
-// BackendDeclareRPC the rpc backend
 func BackendDeclareRPC(rpcType common.BR_RPC_TYPE, host string, port int) BackendHandle {
-	log.Println("SDK BackendDeclareRpc().")
-	return 0
+	C_ret := C.br_backend_declare_rpc(C.br_rpc_type(rpcType), C.CString(host), C.int(port))
+       ret := BackendHandle(C.behandle_to_uint(C_ret))
+       return ret
 }
 
-// ExitcallBegin begin the exitcall
 func ExitcallBegin(btHandle BtHandle, backend BackendHandle) ExitcallHandle {
-	log.Println("SDK ExitcallBegin().")
-	return 0
+	C_ret := C.br_exitcall_begin(C.uint_to_bthandle(C.uintptr_t(btHandle)), C.uint_to_behandle(C.uintptr_t(backend)))
+       ret := ExitcallHandle(C.exithandle_to_uint(C_ret))
+       return ret
 }
 
-// ExitcallSetDetail set the detail of exitcall
 func ExitcallSetDetail(exitcall ExitcallHandle, cmd string, details string) int {
-	log.Println("SDK ExitcallSetDetail().")
-	return 0
+	C_ret := C.br_exitcall_set_detail(C.uint_to_exithandle(C.uintptr_t(exitcall)), C.CString(cmd), C.CString(details))
+       ret := int(C_ret)
+       return ret
 }
 
-// ExitcallAddError add the error to exitcall
 func ExitcallAddError(exitcall ExitcallHandle, errorType common.BR_ERROR_TYPE, errorName string, summary string, details string, markAsError int) {
-	log.Println("SDK ExitcallAddError().")
+	C.br_exitcall_add_error(C.uint_to_exithandle(C.uintptr_t(exitcall)), C.br_error_type(errorType), C.CString(errorName), C.CString(summary), C.CString(details), C.int(markAsError))
 }
 
-// ExitcallEnd end the exitcall
 func ExitcallEnd(exitcall ExitcallHandle) {
-	log.Println("SDK ExitcallEnd().")
+	handle := C.uint_to_exithandle(C.uintptr_t(exitcall))
+	C.br_exitcall_end(handle)
 }
 
-// ExitcallGenerateCrossReqheader generate the crossrequestheader string
 func ExitcallGenerateCrossReqheader(exitcall ExitcallHandle) string {
-	log.Println("SDK ExitcallGenerateCrossReqheader().")
-	return "nbg=1a2f69d6-4964-4eb2-43e3-6f0a744044d8;sst=2;sag=1eb82b05-c6e9-4ffd-bcb4-98757ee3b078;sbn=/ylexamples/fopen6.php;sbt=1514537122492;srh=;sbg=293e7c2d-4334-48c1-4c66-65626def4464"
+	_exitcallHandle := C.uint_to_exithandle(C.uintptr_t(exitcall))
+	return C.GoString(C.br_exitcall_generate_cross_reqheader(_exitcallHandle))
 }
 
-// ExitcallSetCrossResheader set the crossresponseheader to exitcall
 func ExitcallSetCrossResheader(exitcall ExitcallHandle, crossResponseHeader string) {
-	log.Println("SDK ExitcallSetCrossResheader().")
+	_exitcallHandle := C.uint_to_exithandle(C.uintptr_t(exitcall))
+	_crossResponseHeader := C.CString(crossResponseHeader)
+	C.br_exitcall_set_cross_resheader(_exitcallHandle, _crossResponseHeader)
 }
 
 // func BtIsSnapshotting(btHandle BtHandle) byte {
