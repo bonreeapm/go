@@ -1,7 +1,7 @@
 package brbeego
 
 import (
-	"bonree"
+	"github.com/bonreeapm/go"
 	
 	"net/http"
 	"io"

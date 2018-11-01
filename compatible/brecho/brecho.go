@@ -1,7 +1,7 @@
 package brecho
 
 import (
-	"bonree"
+	"github.com/bonreeapm/go"
 	"net/http"
 	"github.com/labstack/echo"
 )

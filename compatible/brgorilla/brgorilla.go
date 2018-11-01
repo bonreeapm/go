@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"bonree"
+	"github.com/bonreeapm/go"
 )
 
 type instrumentedHandler struct {

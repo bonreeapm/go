@@ -3,7 +3,7 @@ package brgin
 import (
 	"net/http"
 	"github.com/gin-gonic/gin"
-	"bonree"
+	"github.com/bonreeapm/go"
 )
 
 type headerResponseWriter struct{ w gin.ResponseWriter }
