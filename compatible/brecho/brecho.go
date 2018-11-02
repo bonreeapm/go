@@ -12,7 +12,7 @@ func WrapHandleFunc(app bonree.Application, pattern string, handler func(echo.Co
 		request := c.Request()
 
 		btn := app.StartBusinessTransaction(pattern, response.Writer, request)
-
+		defer btn.End()
 		response.Writer = btn
 
 		return handler(c)
