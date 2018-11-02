@@ -57,7 +57,7 @@ import (
 	"syscall"
 	"errors"
 	"unsafe"
-	"bonree/common"
+	"github.com/bonreeapm/go/common"
 )
 
 // AppHandle is the Handle of app object.
