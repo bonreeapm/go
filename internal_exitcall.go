@@ -2,8 +2,8 @@ package bonree
 
 import (
 	"errors"
-	"bonree/common"
-	"bonree/sdk"
+	"github.com/bonreeapm/go/common"
+	"github.com/bonreeapm/go/sdk"
 	"net/http"
 )
 

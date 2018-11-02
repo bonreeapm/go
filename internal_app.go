@@ -2,7 +2,7 @@ package bonree
 
 import (
 	"net/http"
-	"bonree/sdk"
+	"github.com/bonreeapm/go/sdk"
 )
 
 type app struct {

@@ -3,7 +3,7 @@ package bonree
 import (
 	"net/http"
 	"errors"
-	"bonree/sdk"
+	"github.com/bonreeapm/go/sdk"
 )
 
 // Application represents the application.

@@ -2,8 +2,8 @@ package bonree
 
 import (
 	"net/http"
-	"bonree/common"
-	"bonree/sdk"
+	"github.com/bonreeapm/go/common"
+	"github.com/bonreeapm/go/sdk"
 )
 
 type btn struct {

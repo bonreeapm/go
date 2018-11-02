@@ -2,7 +2,7 @@ package bonree
 
 import (
 	"net/http"
-	"bonree/common"
+	"github.com/bonreeapm/go/common"
 )
 
 // BusinessTransaction is the transaction of business.
