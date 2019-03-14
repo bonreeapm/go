@@ -11,6 +11,10 @@ type exitcall struct {
 	exitcallHandle sdk.ExitcallHandle
 }
 
+func (exitcall *exitcall) Handle() sdk.ExitcallHandle {
+	return exitcall.exitcallHandle
+}
+
 func (exitcall *exitcall) AddError(errorName string, summary string, details string, markBtAsError bool) {
 	_markBtAsError := 0
 

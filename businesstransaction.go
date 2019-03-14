@@ -20,6 +20,10 @@ type BusinessTransaction interface {
 	StartSQLExitCall(sqlType common.BR_SQL_TYPE, host string, port int, dbschema string, vendor string, version string) ExitCall
 
 	StartNoSQLExitCall(nosqlType common.BR_NOSQL_TYPE, serverPool string, port int, vendor string) ExitCall
+
+	SnapshotFuncStart(className string, funcName string) SnapshotFunc
+
+	SnapshotFuncEnd(snapshotFunc SnapshotFunc)
 }
 
 // GetCurrentTransaction get BusinessTransaction in http handler

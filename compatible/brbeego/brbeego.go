@@ -5,7 +5,6 @@ import (
 	
 	"net/http"
 	"io"
-	"log"
 )
 
 type bodyWrapper struct {
@@ -62,7 +61,6 @@ func WrapHandleFunc(pattern string, handler func(http.ResponseWriter, *http.Requ
 }
 
 func WrapResponseWriter(app bonree.Application, pattern string, w http.ResponseWriter, r *http.Request) http.ResponseWriter {
-	log.Println("StartBusinessTransaction")
 	btn := app.StartBusinessTransaction(pattern, w, r)
 
 	wrapRequest(r, btn)
@@ -71,7 +69,6 @@ func WrapResponseWriter(app bonree.Application, pattern string, w http.ResponseW
 }
 
 func GetCurrentTransaction(w http.ResponseWriter) bonree.BusinessTransaction {
-	log.Println("GetCurrentTransaction")
 	if btn, ok := w.(bonree.BusinessTransaction); ok {
 		return btn
 	}

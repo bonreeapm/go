@@ -2,6 +2,7 @@ package bonree
 
 import (
 	"net/http"
+	"github.com/bonreeapm/go/sdk"
 )
 
 // ExitCall is the remote call of the application.
@@ -17,4 +18,6 @@ type ExitCall interface {
 	SetCrossResheader(header http.Header)
 
 	End()
+
+	Handle() sdk.ExitcallHandle
 }

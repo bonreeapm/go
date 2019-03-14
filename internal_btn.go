@@ -4,14 +4,17 @@ import (
 	"net/http"
 	"github.com/bonreeapm/go/common"
 	"github.com/bonreeapm/go/sdk"
+	"runtime"
 )
 
 type btn struct {
 	W http.ResponseWriter
 	btHandle sdk.BtHandle
+	snapshotThreadHandle sdk.SnapshotThreadHandle
 }
 
 func (btn *btn) End() {
+	sdk.BtSnapshotThreadEnd(btn.snapshotThreadHandle)
 	sdk.BtEnd(btn.btHandle)
 }
 
@@ -27,6 +30,7 @@ func (btn *btn) AddError(errorName string, summary string, details string, markB
 	}
 
 	sdk.BtAddError(btn.btHandle, common.BR_ERROR_TYPE_HTTP, errorName, summary, details, _markBtAsError)
+	sdk.SnapshotErrorAdd(btn.snapshotThreadHandle, errorName, summary, details)
 }
 
 func (btn *btn) AddException(exceptionName string, summary string, details string, markBtAsError bool) {
@@ -94,8 +98,28 @@ func newBtn(app *app, name string, w http.ResponseWriter, r *http.Request) Busin
 
 	sdk.BtSetURL(handle, r.URL.RequestURI())
 
+	snapshotThreadHandle := sdk.BtSnapshotThreadStart(handle)
+
 	return &btn{
 		W: w,
 		btHandle: handle,
+		snapshotThreadHandle: snapshotThreadHandle,
 	}
+}
+
+func (btn *btn) SnapshotFuncStart(className string, funcName string) SnapshotFunc {
+	_,file,line,ok := runtime.Caller(1)
+	if ok {
+		_snapshotFuncHandle := sdk.BtSnapshotFuncStart(btn.snapshotThreadHandle, className, funcName, file, line)
+
+		return &snapshotFunc{
+			snapshotFuncHandle: _snapshotFuncHandle,
+		}
+	}
+
+	return nil
+}
+
+func (btn *btn) SnapshotFuncEnd(snapshotFunc SnapshotFunc) {
+	snapshotFunc.End()
 }

@@ -296,52 +296,52 @@ func ExitcallSetCrossResheader(exitcall ExitcallHandle, crossResponseHeader stri
 	C.br_exitcall_set_cross_resheader(_exitcallHandle, _crossResponseHeader)
 }
 
-// func BtIsSnapshotting(btHandle BtHandle) byte {
-// 	_btHandle := C.uint_to_bthandle(C.uintptr_t(btHandle))
-// 	return byte(C.br_bt_is_snapshotting(_btHandle))
-// }
+func BtIsSnapshotting(btHandle BtHandle) byte {
+	_btHandle := C.uint_to_bthandle(C.uintptr_t(btHandle))
+	return byte(C.br_bt_is_snapshotting(_btHandle))
+}
 
-// func BtSnapshotData(btHandle BtHandle, key string, value string) {
-// 	_btHandle := C.uint_to_bthandle(C.uintptr_t(btHandle))
-// 	_key := C.CString(key)
-// 	_value := C.CString(value)
-// 	C.br_bt_snapshot_data(_btHandle, _key, _value)
-// }
+func BtSnapshotData(btHandle BtHandle, key string, value string) {
+	_btHandle := C.uint_to_bthandle(C.uintptr_t(btHandle))
+	_key := C.CString(key)
+	_value := C.CString(value)
+	C.br_bt_snapshot_data(_btHandle, _key, _value)
+}
 
-// func BtSnapshotThreadStart(btHandle BtHandle) SnapshotThreadHandle {
-// 	_btHandle := C.uint_to_bthandle(C.uintptr_t(btHandle))
-// 	return SnapshotThreadHandle(C.threadhandle_to_uint(C.br_bt_snapshot_thread_start(_btHandle)))
-// }
+func BtSnapshotThreadStart(btHandle BtHandle) SnapshotThreadHandle {
+	_btHandle := C.uint_to_bthandle(C.uintptr_t(btHandle))
+	return SnapshotThreadHandle(C.threadhandle_to_uint(C.br_bt_snapshot_thread_start(_btHandle)))
+}
 
-// func BtSnapshotThreadEnd(snapshotThreadHandle SnapshotThreadHandle) {
-// 	_snapshotThreadHandle := C.uint_to_threadhandle(C.uintptr_t(snapshotThreadHandle))
-// 	C.br_bt_snapshot_thread_end(_snapshotThreadHandle)
-// }
+func BtSnapshotThreadEnd(snapshotThreadHandle SnapshotThreadHandle) {
+	_snapshotThreadHandle := C.uint_to_threadhandle(C.uintptr_t(snapshotThreadHandle))
+	C.br_bt_snapshot_thread_end(_snapshotThreadHandle)
+}
 
-// func BtSnapshotFuncStart(snapshotThreadHandle SnapshotThreadHandle, className string, funcName string, fileName string, lineno int) SnapshotFuncHandle {
-// 	_snapshotThreadHandle := C.uint_to_threadhandle(C.uintptr_t(snapshotThreadHandle))
-// 	_className := C.CString(className)
-// 	_funcName := C.CString(funcName)
-// 	_fileName := C.CString(fileName)
-// 	_lineno := C.int(lineno)
-// 	return SnapshotFuncHandle(C.funchandle_to_uint(C.br_bt_snapshot_func_start(_snapshotThreadHandle, _className, _funcName, _fileName, _lineno)))
-// }
+func BtSnapshotFuncStart(snapshotThreadHandle SnapshotThreadHandle, className string, funcName string, fileName string, lineno int) SnapshotFuncHandle {
+	_snapshotThreadHandle := C.uint_to_threadhandle(C.uintptr_t(snapshotThreadHandle))
+	_className := C.CString(className)
+	_funcName := C.CString(funcName)
+	_fileName := C.CString(fileName)
+	_lineno := C.int(lineno)
+	return SnapshotFuncHandle(C.funchandle_to_uint(C.br_bt_snapshot_func_start(_snapshotThreadHandle, _className, _funcName, _fileName, _lineno)))
+}
 
-// func BtSnapshotFuncEnd(snapshotFuncHandle SnapshotFuncHandle) {
-// 	_snapshotFuncHandle := C.uint_to_funchandle(C.uintptr_t(snapshotFuncHandle))
-// 	C.br_bt_snapshot_func_end(_snapshotFuncHandle)
-// }
+func BtSnapshotFuncEnd(snapshotFuncHandle SnapshotFuncHandle) {
+	_snapshotFuncHandle := C.uint_to_funchandle(C.uintptr_t(snapshotFuncHandle))
+	C.br_bt_snapshot_func_end(_snapshotFuncHandle)
+}
 
-// func SnapshotExitcallAdd(snapshotFuncHandle SnapshotFuncHandle, exitcall ExitcallHandle) {
-// 	_snapshotFuncHandle := C.uint_to_funchandle(C.uintptr_t(snapshotFuncHandle))
-// 	_exitcallHandle := C.uint_to_exithandle(C.uintptr_t(exitcall))
-// 	C.br_snapshot_exitcall_add(_snapshotFuncHandle, _exitcallHandle)
-// }
+func SnapshotExitcallAdd(snapshotFuncHandle SnapshotFuncHandle, exitcall ExitcallHandle) {
+	_snapshotFuncHandle := C.uint_to_funchandle(C.uintptr_t(snapshotFuncHandle))
+	_exitcallHandle := C.uint_to_exithandle(C.uintptr_t(exitcall))
+	C.br_snapshot_exitcall_add(_snapshotFuncHandle, _exitcallHandle)
+}
 
-// func SnapshotErrorAdd(snapshotThreadHandle SnapshotThreadHandle, errorName string, summary string, details string) {
-// 	_snapshotThreadHandle := C.uint_to_threadhandle(C.uintptr_t(snapshotThreadHandle))
-// 	_errorName := C.CString(errorName)
-// 	_summary := C.CString(summary)
-// 	_details := C.CString(details)
-// 	C.br_snapshot_error_add(_snapshotThreadHandle, _errorName, _summary, _details)
-// }
+func SnapshotErrorAdd(snapshotThreadHandle SnapshotThreadHandle, errorName string, summary string, details string) {
+	_snapshotThreadHandle := C.uint_to_threadhandle(C.uintptr_t(snapshotThreadHandle))
+	_errorName := C.CString(errorName)
+	_summary := C.CString(summary)
+	_details := C.CString(details)
+	C.br_snapshot_error_add(_snapshotThreadHandle, _errorName, _summary, _details)
+}
