@@ -34,3 +34,13 @@ func GetCurrentTransaction(w http.ResponseWriter) (BusinessTransaction) {
 
 	return nil
 }
+
+func GetRoutineTransaction() BusinessTransaction {
+	if _routineEngine != nil {
+		routineValue := _routineEngine.Get()
+
+		return (*btn)(routineValue)
+	}
+
+	return nil
+}

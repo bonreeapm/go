@@ -5,6 +5,7 @@ import (
 	"github.com/bonreeapm/go/common"
 	"github.com/bonreeapm/go/sdk"
 	"runtime"
+	"unsafe"
 )
 
 type btn struct {
@@ -100,11 +101,17 @@ func newBtn(app *app, name string, w http.ResponseWriter, r *http.Request) Busin
 
 	snapshotThreadHandle := sdk.BtSnapshotThreadStart(handle)
 
-	return &btn{
+	btn := &btn{
 		W: w,
 		btHandle: handle,
 		snapshotThreadHandle: snapshotThreadHandle,
 	}
+
+	if _routineEngine != nil {
+		_routineEngine.Set(unsafe.Pointer(btn))
+	}
+
+	return btn
 }
 
 func (btn *btn) SnapshotFuncStart(className string, funcName string) SnapshotFunc {

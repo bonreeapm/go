@@ -4,6 +4,7 @@ import (
 	"github.com/bonreeapm/go"
 	"github.com/bonreeapm/go/common"
 	"github.com/bonreeapm/go/compatible/brbeego"
+	"github.com/bonreeapm/go/routineEngine"
 
 	"log"
 	"time"
@@ -36,7 +37,8 @@ func (mainController *MainController) Get() {
 }
 
 func setURL(w http.ResponseWriter, r *http.Request) {	
-	btn := bonree.GetCurrentTransaction(w)
+	//btn := bonree.GetCurrentTransaction(w)
+	btn := bonree.GetRoutineTransaction()
 
 	if btn == nil {
 		fmt.Fprint(w, "Get Transaction fail")
@@ -176,6 +178,8 @@ func main() {
 		log.Fatalln(err)
 		return
 	}
+
+	bonree.RoutineEngineInit(routineEngine.Get())
 
 	defer app.Release()
 

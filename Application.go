@@ -3,6 +3,7 @@ package bonree
 import (
 	"net/http"
 	"errors"
+	"unsafe"
 	"github.com/bonreeapm/go/sdk"
 )
 
@@ -12,6 +13,13 @@ type Application interface {
 
 	Release()
 }
+
+type Engine interface {
+	Get() unsafe.Pointer
+	Set(p unsafe.Pointer)
+}
+
+var _routineEngine Engine = nil
 
 func NewApplication(appName string) (Application, error) {
 	var handle sdk.AppHandle
@@ -36,4 +44,8 @@ func NewApplication(appName string) (Application, error) {
 	app := NewApp(handle)
 
 	return app, nil
+}
+
+func RoutineEngineInit(engine Engine) {
+	_routineEngine = engine
 }
