@@ -17,6 +17,10 @@ type btn struct {
 func (btn *btn) End() {
 	sdk.BtSnapshotThreadEnd(btn.snapshotThreadHandle)
 	sdk.BtEnd(btn.btHandle)
+
+	if _routineEngine != nil {
+		_routineEngine.Set(nil)
+	}
 }
 
 func (btn *btn) SetURL(url string) {
