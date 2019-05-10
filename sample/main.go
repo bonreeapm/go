@@ -3,6 +3,7 @@ package main
 import(
 	"github.com/bonreeapm/go"
 	"github.com/bonreeapm/go/common"
+	"github.com/bonreeapm/go/routineEngine"
 	"time"
 	"net/http"
 	"strconv"
@@ -12,6 +13,21 @@ import(
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/garyburd/redigo/redis"
 )
+
+func routine(w http.ResponseWriter, r *http.Request) {	
+	btn := bonree.GetRoutineTransaction()
+
+	if btn == nil {
+		fmt.Fprint(w, "Get Transaction fail")
+		return
+	}
+
+	snapshotFunc := btn.SnapshotFuncStart("main", "Routine")
+
+	defer btn.SnapshotFuncEnd(snapshotFunc)
+	
+	time.Sleep(time.Duration(3)*time.Second)
+}
 
 func setURL(w http.ResponseWriter, r *http.Request) {	
 	btn := bonree.GetCurrentTransaction(w)
@@ -180,6 +196,9 @@ func main() {
 		return
 	}
 
+	// 如果需要RoutineEngine支持，则加上此行代码
+	bonree.RoutineEngineInit(routineEngine.Get())
+
 	api, err := bonree.NewAPI(app)
 
 	if err != nil {
@@ -189,6 +208,7 @@ func main() {
 
 	defer api.Stop()
 
+	http.HandleFunc(api.WrapHandleFunc("/routine", routine))
 	http.HandleFunc(api.WrapHandleFunc("/setURL", setURL))
 	http.HandleFunc(api.WrapHandleFunc("/addError", addError))
 	http.HandleFunc(api.WrapHandleFunc("/sendCrossRequest", sendCrossRequest))
