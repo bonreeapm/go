@@ -21,6 +21,7 @@ type Engine interface {
 
 var _routineEngine Engine = nil
 
+// NewApplication is create a new Application
 func NewApplication(appName string) (Application, error) {
 	var handle sdk.AppHandle
 
@@ -46,6 +47,7 @@ func NewApplication(appName string) (Application, error) {
 	return app, nil
 }
 
+// RoutineEngineInit is initialize RoutineEngine for sdk
 func RoutineEngineInit(engine Engine) {
 	_routineEngine = engine
 }

@@ -12,7 +12,6 @@ import (
 	"strconv"
 	"fmt"	
 	"github.com/astaxie/beego"
-	"github.com/astaxie/beego/context"
 	"database/sql"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/garyburd/redigo/redis"
@@ -37,13 +36,27 @@ func (mainController *MainController) Get() {
 }
 
 func setURL(w http.ResponseWriter, r *http.Request) {	
-	//btn := bonree.GetCurrentTransaction(w)
+	btn := bonree.GetCurrentTransaction(w)
+
+	if btn == nil {
+		fmt.Fprint(w, "Get Transaction fail")
+		return
+	}
+	
+	time.Sleep(time.Duration(3)*time.Second)
+}
+
+func routine(w http.ResponseWriter, r *http.Request) {	
 	btn := bonree.GetRoutineTransaction()
 
 	if btn == nil {
 		fmt.Fprint(w, "Get Transaction fail")
 		return
 	}
+
+	snapshotFunc := btn.SnapshotFuncStart("main", "Routine")
+
+	defer btn.SnapshotFuncEnd(snapshotFunc)
 	
 	time.Sleep(time.Duration(3)*time.Second)
 }
@@ -179,10 +192,12 @@ func main() {
 		return
 	}
 
+	// 如果需要RoutineEngine支持，则加上此行代码
 	bonree.RoutineEngineInit(routineEngine.Get())
 
 	defer app.Release()
 
+	beego.Handler(brbeego.WrapHandleFunc("/routine", routine))
 	beego.Handler(brbeego.WrapHandleFunc("/setURL", setURL))
 	beego.Handler(brbeego.WrapHandleFunc("/addError", addError))
 	beego.Handler(brbeego.WrapHandleFunc("/sendCrossRequest", sendCrossRequest))
@@ -192,15 +207,7 @@ func main() {
 
 	beego.Router("/", &MainController{})
 
-	beego.InsertFilter("/*", beego.BeforeExec, func(ctx *context.Context) {
-		ctx.ResponseWriter.ResponseWriter = brbeego.WrapResponseWriter(app, ctx.Request.RequestURI, ctx.ResponseWriter.ResponseWriter, ctx.Request)
-	})
-	beego.InsertFilter("/*", beego.AfterExec, func(ctx *context.Context) {
-		btn := brbeego.GetCurrentTransaction(ctx.ResponseWriter.ResponseWriter)
-		if btn != nil {
-			btn.End()
-		}
-	}, false)
+	brbeego.InsertFilter(app)
 
 	beego.Run(":9099")
 }
