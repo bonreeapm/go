@@ -64,8 +64,8 @@ func (exitcall *exitcall) SetCrossResheader(header http.Header) {
 	sdk.ExitcallSetCrossResheader(exitcall.exitcallHandle, crossResponseHeader)
 }
 
-func (exitcall *exitcall) GetCrossRequestHeader() string {
-	return sdk.ExitcallGenerateCrossReqheader(exitcall.exitcallHandle)
+func (exitcall *exitcall) GetCrossRequestHeader() (string, string) {
+	return common.CrossRequestHeader, sdk.ExitcallGenerateCrossReqheader(exitcall.exitcallHandle)
 }
 
 func (exitcall *exitcall) SetCrossResponseHeader(header string) {

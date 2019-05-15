@@ -17,7 +17,7 @@ type ExitCall interface {
 
 	SetCrossResheader(header http.Header)
 
-	GetCrossRequestHeader() string
+	GetCrossRequestHeader() (string, string)
 
 	SetCrossResponseHeader(header string)
 
