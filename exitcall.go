@@ -17,6 +17,10 @@ type ExitCall interface {
 
 	SetCrossResheader(header http.Header)
 
+	GetCrossRequestHeader() string
+
+	SetCrossResponseHeader(header string)
+
 	End()
 
 	Handle() sdk.ExitcallHandle
