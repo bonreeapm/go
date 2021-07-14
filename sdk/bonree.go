@@ -51,13 +51,13 @@ br_exitcall_t uint_to_exithandle(uintptr_t exithandle) {
 import "C"
 
 import (
-	"os"
-    "os/signal"
-    "sync"
-	"syscall"
 	"errors"
-	"unsafe"
 	"github.com/bonreeapm/go/common"
+	"os"
+	"os/signal"
+	"sync"
+	"syscall"
+	"unsafe"
 )
 
 // AppHandle is the Handle of app object.
@@ -82,6 +82,14 @@ type ExitcallHandle uint64
 type AppConfig struct {
 	AppName, TierName, ClusterName, AgentName string
 }
+
+//
+type BackendDeclare struct{
+	BackendType common.BR_BACKEND_TYPE
+	Port  int
+	ConnType, Host, DBName string
+}
+
 
 var appHandleSlice []AppHandle
 
@@ -142,12 +150,12 @@ func removeAppHandle(appHandle AppHandle) {
 			_appHandleSlice = append(appHandleSlice[:i], appHandleSlice[i+1:]...)			
 		}
 	}
-		appHandleSlice = _appHandleSlice
+	appHandleSlice = _appHandleSlice
 }
 
 func marshalAppConfig(from *AppConfig) C.br_app_config_t {
 	to := C.br_app_config_t{}
-	
+	// 需要再调用完成后, 再调用freeAppConfigMembers 释放内存
 	to.app_name = C.CString(from.AppName)
 	to.tier_name = C.CString(from.TierName)
 	to.cluster_name = C.CString(from.ClusterName)
@@ -183,7 +191,6 @@ func AppInitWithCfg(appConfig *AppConfig) AppHandle {
 	cAppConfig := marshalAppConfig(appConfig)
 
 	defer freeAppConfigMembers(cAppConfig)
-
 	appHandle := AppHandle(C.apphandle_to_uint(C.br_app_init_with_cfg(&cAppConfig)))
 	appendAppHandle(appHandle)
 	return appHandle
@@ -201,28 +208,13 @@ func AppRelease(appHandle AppHandle) {
 func BtBegin(appHandle AppHandle, name string) BtHandle {
 	_appHandle := C.uint_to_apphandle(C.uintptr_t(appHandle))
 	_name := C.CString(name)
-
+	defer C.free(unsafe.Pointer(_name))
 	return BtHandle(C.bthandle_to_uint(C.br_bt_begin(_appHandle, _name)))
-}
-
-// BtBeginEx Begin the BT with crossRequestHeader
-func BtBeginEx(appHandle AppHandle, name string, crossRequestHeader string) BtHandle {
-	_appHandle := C.uint_to_apphandle(C.uintptr_t(appHandle))
-	_name := C.CString(name)
-	_crossRequestHeader := C.CString(crossRequestHeader)
-	return BtHandle(C.bthandle_to_uint(C.br_bt_begin_ex(_appHandle, _name, _crossRequestHeader)))
-}
-
-// BtGenerateCrossResheader generate crossResponseHeader
-func BtGenerateCrossResheader(btHandle BtHandle) string {
-	_btHandle := C.uint_to_bthandle(C.uintptr_t(btHandle))
-	return C.GoString(C.br_bt_generate_cross_resheader(_btHandle))
 }
 
 // BtEnd End the BT
 func BtEnd(btHandle BtHandle) {
 	_btHandle := C.uint_to_bthandle(C.uintptr_t(btHandle))
-
 	C.br_bt_end(_btHandle)
 }
 
@@ -230,6 +222,7 @@ func BtEnd(btHandle BtHandle) {
 func BtSetURL(btHandle BtHandle, url string) {
 	_btHandle := C.uint_to_bthandle(C.uintptr_t(btHandle))
 	_url := C.CString(url)
+	defer C.free(unsafe.Pointer(_url))
 
 	C.br_bt_set_url(_btHandle, _url)
 }
@@ -243,57 +236,84 @@ func BtAddError(btHandle BtHandle, errorType common.BR_ERROR_TYPE, errorName str
 	_details := C.CString(details)
 	_markBtAsError := C.int(markBtAsError)
 
+	defer C.free(unsafe.Pointer(_errorName))
+	defer C.free(unsafe.Pointer(_summary))
+	defer C.free(unsafe.Pointer(_details))
+
 	C.br_bt_add_error(_btHandle, _errorType, _errorName, _summary, _details, _markBtAsError)
-}
-
-func BackendDeclareSQL(sqlType common.BR_SQL_TYPE, host string, port int, dbschema string, vendor string, version string) BackendHandle {
-	C_ret := C.br_backend_declare_sql(C.br_sql_type(sqlType), C.CString(host), C.int(port), C.CString(dbschema), C.CString(vendor), C.CString(version))
-       ret := BackendHandle(C.behandle_to_uint(C_ret))
-       return ret
-}
-
-func BackendDeclareNosql(nosqlType common.BR_NOSQL_TYPE, serverPool string, port int, vendor string) BackendHandle {
-	C_ret := C.br_backend_declare_nosql(C.br_nosql_type(nosqlType), C.CString(serverPool), C.int(port), C.CString(vendor))
-       ret := BackendHandle(C.behandle_to_uint(C_ret))
-       return ret
-}
-
-func BackendDeclareRPC(rpcType common.BR_RPC_TYPE, host string, port int) BackendHandle {
-	C_ret := C.br_backend_declare_rpc(C.br_rpc_type(rpcType), C.CString(host), C.int(port))
-       ret := BackendHandle(C.behandle_to_uint(C_ret))
-       return ret
 }
 
 func ExitcallBegin(btHandle BtHandle, backend BackendHandle) ExitcallHandle {
 	C_ret := C.br_exitcall_begin(C.uint_to_bthandle(C.uintptr_t(btHandle)), C.uint_to_behandle(C.uintptr_t(backend)))
-       ret := ExitcallHandle(C.exithandle_to_uint(C_ret))
-       return ret
+
+	ret := ExitcallHandle(C.exithandle_to_uint(C_ret))
+	return ret
+}
+
+
+func marshalBackendDeclare(from* BackendDeclare)  C.br_backend_declare_t {
+	to := C.br_backend_declare_t{}
+	// 需要再调用完成后, freeBackendDeclare 释放内存
+	intType := int(from.BackendType)
+	to.backendType = C.int(intType)
+	to.conn_type = C.CString(from.ConnType)
+	to.host = C.CString(from.Host)
+	to.db_name = C.CString(from.DBName)
+	to.port = C.uint(from.Port)
+	return to
+}
+
+func freeBackendDeclare (cBackendDeclare C.br_backend_declare_t) {
+	if cBackendDeclare.conn_type != nil {
+		C.free(unsafe.Pointer(cBackendDeclare.conn_type))
+	}
+
+	if cBackendDeclare.host!= nil {
+		C.free(unsafe.Pointer(cBackendDeclare.host))
+	}
+
+	if cBackendDeclare.db_name!= nil {
+		C.free(unsafe.Pointer(cBackendDeclare.db_name))
+	}
+}
+
+func ExitcallBeginEx(btHandle BtHandle, backend* BackendDeclare) ExitcallHandle {
+	backendInfo := marshalBackendDeclare(backend)
+	defer  freeBackendDeclare(backendInfo)
+
+	C_ret := C.br_exitcall_begin_ex(C.uint_to_bthandle(C.uintptr_t(btHandle)),  &backendInfo)
+	ret := ExitcallHandle(C.exithandle_to_uint(C_ret))
+	return ret
 }
 
 func ExitcallSetDetail(exitcall ExitcallHandle, cmd string, details string) int {
-	C_ret := C.br_exitcall_set_detail(C.uint_to_exithandle(C.uintptr_t(exitcall)), C.CString(cmd), C.CString(details))
-       ret := int(C_ret)
-       return ret
+	_cmd := C.CString(cmd)
+	defer C.free(unsafe.Pointer(_cmd))
+
+	_details := C.CString(details)
+	defer C.free(unsafe.Pointer(_details))
+
+	C_ret := C.br_exitcall_set_detail(C.uint_to_exithandle(C.uintptr_t(exitcall)), _cmd, _details)
+	ret := int(C_ret)
+	return ret
 }
 
 func ExitcallAddError(exitcall ExitcallHandle, errorType common.BR_ERROR_TYPE, errorName string, summary string, details string, markAsError int) {
-	C.br_exitcall_add_error(C.uint_to_exithandle(C.uintptr_t(exitcall)), C.br_error_type(errorType), C.CString(errorName), C.CString(summary), C.CString(details), C.int(markAsError))
+	_errorName := C.CString(errorName)
+	defer C.free(unsafe.Pointer(_errorName))
+
+	_summary := C.CString(summary)
+	defer  C.free(unsafe.Pointer(_summary))
+
+	_details := C.CString(details)
+	defer  C.free(unsafe.Pointer(_details))
+
+	C.br_exitcall_add_error(C.uint_to_exithandle(C.uintptr_t(exitcall)), C.br_error_type(errorType), _errorName, _summary, _details, C.int(markAsError))
 }
 
 func ExitcallEnd(exitcall ExitcallHandle) {
 	handle := C.uint_to_exithandle(C.uintptr_t(exitcall))
 	C.br_exitcall_end(handle)
-}
-
-func ExitcallGenerateCrossReqheader(exitcall ExitcallHandle) string {
-	_exitcallHandle := C.uint_to_exithandle(C.uintptr_t(exitcall))
-	return C.GoString(C.br_exitcall_generate_cross_reqheader(_exitcallHandle))
-}
-
-func ExitcallSetCrossResheader(exitcall ExitcallHandle, crossResponseHeader string) {
-	_exitcallHandle := C.uint_to_exithandle(C.uintptr_t(exitcall))
-	_crossResponseHeader := C.CString(crossResponseHeader)
-	C.br_exitcall_set_cross_resheader(_exitcallHandle, _crossResponseHeader)
 }
 
 func BtIsSnapshotting(btHandle BtHandle) byte {
@@ -304,7 +324,9 @@ func BtIsSnapshotting(btHandle BtHandle) byte {
 func BtSnapshotData(btHandle BtHandle, key string, value string) {
 	_btHandle := C.uint_to_bthandle(C.uintptr_t(btHandle))
 	_key := C.CString(key)
+	defer  C.free(unsafe.Pointer(_key))
 	_value := C.CString(value)
+	defer  C.free(unsafe.Pointer(_value))
 	C.br_bt_snapshot_data(_btHandle, _key, _value)
 }
 
@@ -315,33 +337,45 @@ func BtSnapshotThreadStart(btHandle BtHandle) SnapshotThreadHandle {
 
 func BtSnapshotThreadEnd(snapshotThreadHandle SnapshotThreadHandle) {
 	_snapshotThreadHandle := C.uint_to_threadhandle(C.uintptr_t(snapshotThreadHandle))
+
 	C.br_bt_snapshot_thread_end(_snapshotThreadHandle)
 }
 
 func BtSnapshotFuncStart(snapshotThreadHandle SnapshotThreadHandle, className string, funcName string, fileName string, lineno int) SnapshotFuncHandle {
 	_snapshotThreadHandle := C.uint_to_threadhandle(C.uintptr_t(snapshotThreadHandle))
 	_className := C.CString(className)
+	defer C.free(unsafe.Pointer(_className))
 	_funcName := C.CString(funcName)
+	defer C.free(unsafe.Pointer(_funcName))
 	_fileName := C.CString(fileName)
+	defer C.free(unsafe.Pointer(_fileName))
 	_lineno := C.int(lineno)
+
 	return SnapshotFuncHandle(C.funchandle_to_uint(C.br_bt_snapshot_func_start(_snapshotThreadHandle, _className, _funcName, _fileName, _lineno)))
 }
 
 func BtSnapshotFuncEnd(snapshotFuncHandle SnapshotFuncHandle) {
 	_snapshotFuncHandle := C.uint_to_funchandle(C.uintptr_t(snapshotFuncHandle))
+
 	C.br_bt_snapshot_func_end(_snapshotFuncHandle)
 }
 
 func SnapshotExitcallAdd(snapshotFuncHandle SnapshotFuncHandle, exitcall ExitcallHandle) {
 	_snapshotFuncHandle := C.uint_to_funchandle(C.uintptr_t(snapshotFuncHandle))
 	_exitcallHandle := C.uint_to_exithandle(C.uintptr_t(exitcall))
+
 	C.br_snapshot_exitcall_add(_snapshotFuncHandle, _exitcallHandle)
 }
 
 func SnapshotErrorAdd(snapshotThreadHandle SnapshotThreadHandle, errorName string, summary string, details string) {
 	_snapshotThreadHandle := C.uint_to_threadhandle(C.uintptr_t(snapshotThreadHandle))
 	_errorName := C.CString(errorName)
+	defer C.free(unsafe.Pointer(_errorName))
+
 	_summary := C.CString(summary)
+	defer C.free(unsafe.Pointer(_summary))
+
 	_details := C.CString(details)
+	defer C.free(unsafe.Pointer(_details))
 	C.br_snapshot_error_add(_snapshotThreadHandle, _errorName, _summary, _details)
 }

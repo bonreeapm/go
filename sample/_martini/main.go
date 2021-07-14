@@ -44,7 +44,7 @@ func main() {
 		// bonree:创建快照方法
 		snapshotFunc := btn.SnapshotFuncStart("main", "test")
 
-		connStr := "postgres://apmtest:Apmceshi123@10.221.150.179:5444/edb?sslmode=disable"
+		connStr := "postgres://apmtest:Apmceshi123@backend.br007.top:5432/edb?sslmode=disable"
 		db, err := sql.Open("postgres", connStr)
 		if err != nil {
 			log.Fatal(err)
@@ -52,8 +52,7 @@ func main() {
 		defer db.Close()
 
 		// bonree:创建exitCall(后端)
-		exitcall := btn.StartSQLExitCall(common.BR_SQL_TYPE_POSTGRESQL, "10.221.150.179", 5444, "postgres", "postgres", "")
-
+		exitcall := btn.StartSQLExitCall(common.BACKEND_TYPE_MYSQL, "backend.br007.top", 5432, "postgres", "INNER JOIN")
 		snapshotFunc.AddExitCall(exitcall)
 
 		// bonree:结束后端

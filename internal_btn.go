@@ -1,9 +1,9 @@
 package bonree
 
 import (
-	"net/http"
 	"github.com/bonreeapm/go/common"
 	"github.com/bonreeapm/go/sdk"
+	"net/http"
 	"runtime"
 	"unsafe"
 )
@@ -17,10 +17,6 @@ type btn struct {
 func (btn *btn) End() {
 	sdk.BtSnapshotThreadEnd(btn.snapshotThreadHandle)
 	sdk.BtEnd(btn.btHandle)
-
-	if _routineEngine != nil {
-		_routineEngine.Set(nil)
-	}
 }
 
 func (btn *btn) SetURL(url string) {
@@ -48,27 +44,45 @@ func (btn *btn) AddException(exceptionName string, summary string, details strin
 	sdk.BtAddError(btn.btHandle, common.BR_ERROR_TYPE_EXCEPTION, exceptionName, summary, details, _markBtAsError)
 }
 
-func (btn *btn) StartRPCExitCall(rpcType common.BR_RPC_TYPE, host string, port int) ExitCall {
-	backendHandle := sdk.BackendDeclareRPC(rpcType, host, port)
-	exitcallHandle := sdk.ExitcallBegin(btn.btHandle, backendHandle)
+func (btn *btn) StartRPCExitCall(rpcType common.BR_BACKEND_TYPE, host string, port int) ExitCall {
+	var rpcInfo sdk.BackendDeclare
+	rpcInfo.DBName = ""
+	rpcInfo.Host = host
+	rpcInfo.ConnType = ""
+	rpcInfo.Port = port
+
+	rpcInfo.BackendType = rpcType
+	//  use rpcInfo (type sdk.BackendDeclare) as type *sdk.BackendDeclare
+	exitcallHandle := sdk.ExitcallBeginEx(btn.btHandle, &rpcInfo)
 
 	return &exitcall{
 		exitcallHandle: exitcallHandle,
 	}
 }
 
-func (btn *btn) StartSQLExitCall(sqlType common.BR_SQL_TYPE, host string, port int, dbschema string, vendor string, version string) ExitCall {
-	backendHandle := sdk.BackendDeclareSQL(sqlType, host, port, dbschema, vendor, version)
-	exitcallHandle := sdk.ExitcallBegin(btn.btHandle, backendHandle)
+//BR_SQL_TYPE  BR_BACKEND_TYPE
+func (btn *btn) StartSQLExitCall(sqlType common.BR_BACKEND_TYPE, host string, port int, dbschema string, conn_type string) ExitCall {
+	var rpcInfo sdk.BackendDeclare
+	rpcInfo.DBName = dbschema
+	rpcInfo.Host = host
+	rpcInfo.ConnType = conn_type
+	rpcInfo.Port = port
+	rpcInfo.BackendType = sqlType
+	exitcallHandle := sdk.ExitcallBeginEx(btn.btHandle, &rpcInfo)
 
 	return &exitcall{
 		exitcallHandle: exitcallHandle,
 	}
 }
 
-func (btn *btn) StartNoSQLExitCall(nosqlType common.BR_NOSQL_TYPE, serverPool string, port int, vendor string) ExitCall {
-	backendHandle := sdk.BackendDeclareNosql(nosqlType, serverPool, port, vendor)
-	exitcallHandle := sdk.ExitcallBegin(btn.btHandle, backendHandle)
+func (btn *btn) StartNoSQLExitCall(nosqlType common.BR_BACKEND_TYPE, serverPool string, port int, conn_type string) ExitCall {
+	var rpcInfo sdk.BackendDeclare
+	rpcInfo.DBName = ""
+	rpcInfo.Host = serverPool
+	rpcInfo.ConnType = conn_type
+	rpcInfo.Port = port
+	rpcInfo.BackendType = nosqlType
+	exitcallHandle := sdk.ExitcallBeginEx(btn.btHandle, &rpcInfo)
 
 	return &exitcall{
 		exitcallHandle: exitcallHandle,
@@ -90,16 +104,16 @@ func (btn *btn) WriteHeader(code int) {
 func newBtn(app *app, name string, w http.ResponseWriter, r *http.Request) BusinessTransaction {
 	var handle sdk.BtHandle
 
-	crossReqHeader :=  r.Header.Get(common.CrossRequestHeader)
-	if crossReqHeader == "" {
-		handle = sdk.BtBegin(app.appHandle, name)
-	} else {		
-		handle = sdk.BtBeginEx(app.appHandle, name, crossReqHeader)
+	//crossReqHeader :=  r.Header.Get(common.CrossRequestHeader)
+	//if crossReqHeader == "" {
+	handle = sdk.BtBegin(app.appHandle, name)
+	//} else {		
+	//	handle = sdk.BtBeginEx(app.appHandle, name, crossReqHeader)
 
-		crossResHeader := sdk.BtGenerateCrossResheader(handle)
+	//	crossResHeader := sdk.BtGenerateCrossResheader(handle)
 
-		w.Header().Add(common.CrossResponseHeader, crossResHeader)
-	}
+	//	w.Header().Add(common.CrossResponseHeader, crossResHeader)
+	//}
 
 	sdk.BtSetURL(handle, r.URL.RequestURI())
 

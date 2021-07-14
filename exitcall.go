@@ -1,7 +1,7 @@
 package bonree
 
 import (
-	"net/http"
+//	"net/http"
 	"github.com/bonreeapm/go/sdk"
 )
 
@@ -13,13 +13,9 @@ type ExitCall interface {
 
 	SetDetail(cmd string, details string) error
 
-	RoundTripper() http.RoundTripper
+	//RoundTripper() http.RoundTripper
 
-	SetCrossResheader(header http.Header)
-
-	GetCrossRequestHeader() (string, string)
-
-	SetCrossResponseHeader(header string)
+	//SetCrossResheader(header http.Header)
 
 	End()
 

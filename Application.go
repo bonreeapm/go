@@ -31,8 +31,8 @@ func NewApplication(appName string) (Application, error) {
 		appConfig := &sdk.AppConfig{
 			AppName: appName,
 			AgentName: appName,
-			TierName: "My Tier",
-			ClusterName: "My Cluster", 
+			TierName: appName,
+			ClusterName: appName, 
 		}
 	
 		handle = sdk.AppInitWithCfg(appConfig)

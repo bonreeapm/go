@@ -1,5 +1,5 @@
 package bonree
-
+/*
 import (
 	"net/http"
 	"github.com/bonreeapm/go/common"
@@ -18,3 +18,4 @@ func bonreeRoundTripper(crossReqheader string) http.RoundTripper {
 		return response, err
 	})
 }
+*/

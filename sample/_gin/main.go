@@ -37,7 +37,7 @@ func addError(c *gin.Context) {
 	time.Sleep(time.Duration(3)*time.Second)
 }
 
-const mysqldb = "root:111111@tcp(192.168.0.201:3306)/test"
+const mysqldb = "root:brxm@123@tcp(backend.br007.top:3306)/test"
 func mysqlSelectHandler(c *gin.Context) {
 	btn := brgin.GetCurrentTransaction(c)
 
@@ -55,7 +55,7 @@ func mysqlSelectHandler(c *gin.Context) {
 	defer db.Close();
 
 	snapshotFunc := btn.SnapshotFuncStart("main", "mysqlSelectHandler")
-	exitcall := btn.StartSQLExitCall(common.BR_SQL_TYPE_MYSQL, "192.168.0.201", 3306, "test", "mysql", "")
+	exitcall := btn.StartSQLExitCall(common.BACKEND_TYPE_MYSQL, "backend.br007.top", 3306, "test", "PROC")
 	snapshotFunc.AddExitCall(exitcall)
 	defer exitcall.End()
 	defer btn.SnapshotFuncEnd(snapshotFunc)
@@ -88,13 +88,13 @@ func redisGetHandler(c *gin.Context) {
 		return
 	}
 
-	conn, err := redis.Dial("tcp", "192.168.0.201:6379")
+	conn, err := redis.Dial("tcp", "backend.br007.top:6379")
 	if err != nil {
 		return
 	}
 
 	snapshotFunc := btn.SnapshotFuncStart("main", "redisGetHandler")
-	exitcall := btn.StartNoSQLExitCall(common.BR_NOSQL_TYPE_REDIS, "192.168.0.201", 6379, "redis")
+	exitcall := btn.StartNoSQLExitCall(common.BACKEND_TYPE_REDIS, "backend.br007.top", 6379, "StackExchangeRedis")
 	snapshotFunc.AddExitCall(exitcall)
 	defer exitcall.End()
 	defer btn.SnapshotFuncEnd(snapshotFunc)

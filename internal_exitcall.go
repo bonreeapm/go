@@ -4,7 +4,7 @@ import (
 	"errors"
 	"github.com/bonreeapm/go/common"
 	"github.com/bonreeapm/go/sdk"
-	"net/http"
+//	"net/http"
 )
 
 type exitcall struct {
@@ -37,18 +37,21 @@ func (exitcall *exitcall) AddException(exceptionName string, summary string, det
 
 func (exitcall *exitcall) SetDetail(cmd string, details string) error {
 	ret := sdk.ExitcallSetDetail(exitcall.exitcallHandle, cmd, details)
-	if ret != 0 {
+    // 0 is false
+	if ret == 0 {
 		return errors.New("ExitCall setDetail is fail")
 	}
 
 	return nil
 }
 
+/*
 func (exitcall *exitcall) RoundTripper() http.RoundTripper {
 	crossReqheader := sdk.ExitcallGenerateCrossReqheader(exitcall.exitcallHandle)
 
 	return bonreeRoundTripper(crossReqheader)
 }
+
 
 func (exitcall *exitcall) SetCrossResheader(header http.Header) {
 	if header == nil {
@@ -63,14 +66,7 @@ func (exitcall *exitcall) SetCrossResheader(header http.Header) {
 
 	sdk.ExitcallSetCrossResheader(exitcall.exitcallHandle, crossResponseHeader)
 }
-
-func (exitcall *exitcall) GetCrossRequestHeader() (string, string) {
-	return common.CrossRequestHeader, sdk.ExitcallGenerateCrossReqheader(exitcall.exitcallHandle)
-}
-
-func (exitcall *exitcall) SetCrossResponseHeader(header string) {
-	sdk.ExitcallSetCrossResheader(exitcall.exitcallHandle, header)
-}
+*/
 
 func (exitcall *exitcall) End() {
 	sdk.ExitcallEnd(exitcall.exitcallHandle)

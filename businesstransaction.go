@@ -1,8 +1,8 @@
 package bonree
 
 import (
-	"net/http"
 	"github.com/bonreeapm/go/common"
+	"net/http"
 )
 
 // BusinessTransaction is the transaction of business.
@@ -15,11 +15,11 @@ type BusinessTransaction interface {
 
 	AddException(exceptionName string, summary string, details string, markBtAsError bool)
 
-	StartRPCExitCall(rpcType common.BR_RPC_TYPE, host string, port int) ExitCall
+	StartRPCExitCall(rpcType common.BR_BACKEND_TYPE, host string, port int) ExitCall
 
-	StartSQLExitCall(sqlType common.BR_SQL_TYPE, host string, port int, dbschema string, vendor string, version string) ExitCall
+	StartSQLExitCall(sqlType common.BR_BACKEND_TYPE, host string, port int, dbschema string, conn_type string) ExitCall
 
-	StartNoSQLExitCall(nosqlType common.BR_NOSQL_TYPE, serverPool string, port int, vendor string) ExitCall
+	StartNoSQLExitCall(nosqlType common.BR_BACKEND_TYPE, serverPool string, port int, conn_type string) ExitCall
 
 	SnapshotFuncStart(className string, funcName string) SnapshotFunc
 

@@ -57,14 +57,14 @@ func sendCrossRequest(w http.ResponseWriter, r *http.Request) {
 
 	snapshotFunc := btn.SnapshotFuncStart("main", "sendCrossRequest")
 
-	exitcall := btn.StartRPCExitCall(common.BR_RPC_TYPE_HTTP, host, port)
+	exitcall := btn.StartRPCExitCall(common.BACKEND_TYPE_HTTP, host, port)
 	snapshotFunc.AddExitCall(exitcall)
 	defer exitcall.End()
 	defer btn.SnapshotFuncEnd(snapshotFunc)
 
 	client := &http.Client{}
-	client.Transport = exitcall.RoundTripper()
-	resp, err := client.Get("http://" + host + ":" + strconv.Itoa(port) + "/receiveCrossRequest")
+	//client.Transport = exitcall.RoundTripper()
+	_, err := client.Get("http://" + host + ":" + strconv.Itoa(port) + "/receiveCrossRequest")
 
 	if err != nil {
 		fmt.Fprint(w, err.Error())
@@ -72,13 +72,13 @@ func sendCrossRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	exitcall.SetCrossResheader(resp.Header)
+	//exitcall.SetCrossResheader(resp.Header)
 
 	fmt.Fprint(w, "Send Cross Request.")
 	return
 }
 
-const mysqldb = "root:111111@tcp(192.168.0.201:3306)/test"
+const mysqldb = "root:brxm@123@tcp(backend.br007.top:3306)/test"
 func mysqlSelectHandler(w http.ResponseWriter, r *http.Request) {
 	btn := bonree.GetCurrentTransaction(w)
 
@@ -97,7 +97,7 @@ func mysqlSelectHandler(w http.ResponseWriter, r *http.Request) {
 
 	snapshotFunc := btn.SnapshotFuncStart("main", "mysqlSelectHandler")
 
-	exitcall := btn.StartSQLExitCall(common.BR_SQL_TYPE_MYSQL, "192.168.0.201", 3306, "test", "mysql", "")
+	exitcall := btn.StartSQLExitCall(common.BACKEND_TYPE_MYSQL, "backend.br007.top", 3306, "test", "PROC")
 	snapshotFunc.AddExitCall(exitcall)
 	defer exitcall.End()
 	defer btn.SnapshotFuncEnd(snapshotFunc)
@@ -130,14 +130,14 @@ func redisGetHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	c, err := redis.Dial("tcp", "192.168.0.201:6379")
+	c, err := redis.Dial("tcp", "backend.br007.top:6379")
 	if err != nil {
 		return
 	}
 
 	snapshotFunc := btn.SnapshotFuncStart("main", "redisGetHandler")
 
-	exitcall := btn.StartNoSQLExitCall(common.BR_NOSQL_TYPE_REDIS, "192.168.0.201", 6379, "redis")
+	exitcall := btn.StartNoSQLExitCall(common.BACKEND_TYPE_REDIS, "backend.br007.top", 6379, "StackExchangeRedis")
 	snapshotFunc.AddExitCall(exitcall)
 	defer exitcall.End()
 	defer btn.SnapshotFuncEnd(snapshotFunc)
